@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrediChain — Web3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<!-- ethers.js v5 — the only dependency -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<style>
+:root {
+  --cream:#f5f2eb; --cream2:#edeade; --paper:#faf9f5;
+  --ink:#1a1a2e; --ink2:#2d2d44; --ink3:#44445a; --muted:#8a8a9a;
+  --border:#d8d4c8; --border2:#c8c3b5;
+  --gold:#c8900a; --gold2:#e8a820; --goldbg:#fef3d8; --goldbrd:#f0d080;
+  --red:#b03020; --redbg:#fbeae7;
+  --green:#1a7a4a; --greenbg:#e6f5ed;
+  --blue:#1a4a8a; --bluebg:#e8f0fa;
+  --shadow:0 1px 3px rgba(26,26,46,.08),0 4px 16px rgba(26,26,46,.04);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--ink);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* HEADER */
+.hdr{height:52px;background:var(--ink);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;border-bottom:2px solid var(--gold);}
+.hdr-left{display:flex;align-items:center;gap:16px;}
+.logo{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#fff;letter-spacing:3px;display:flex;align-items:center;gap:9px;}
+.logo-diamond{width:18px;height:18px;background:var(--gold2);transform:rotate(45deg);flex-shrink:0;}
+.hdr-sep{width:1px;height:22px;background:rgba(255,255,255,0.1);}
+.hdr-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,0.28);letter-spacing:1px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.hpill{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 9px;border-radius:2px;letter-spacing:0.5px;}
+.pill-net{background:rgba(200,144,10,0.18);color:var(--gold2);border:1px solid rgba(200,144,10,0.35);}
+.pill-live{background:rgba(26,122,74,0.18);color:#4adc8a;border:1px solid rgba(26,122,74,0.35);display:flex;align-items:center;gap:5px;}
+.pill-dead{background:rgba(176,48,32,0.18);color:#e07060;border:1px solid rgba(176,48,32,0.35);display:flex;align-items:center;gap:5px;}
+.pill-warn{background:rgba(200,144,10,0.18);color:var(--gold2);border:1px solid rgba(200,144,10,0.35);display:flex;align-items:center;gap:5px;cursor:pointer;}
+.ldot{width:5px;height:5px;border-radius:50%;background:#4adc8a;animation:blink 1.4s infinite;}
+.ddot{width:5px;height:5px;border-radius:50%;background:#e07060;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* WALLET BAR */
+.wbar{height:46px;background:var(--ink2);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.wbar-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:1.5px;white-space:nowrap;}
+.w-addr{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#fff;background:rgba(255,255,255,0.04);border:1px solid rgba(200,144,10,0.3);border-radius:3px;padding:5px 12px;flex:1;max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wbadge{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:9px;}
+.wpill{padding:4px 10px;border-radius:2px;white-space:nowrap;}
+.wpill-bal{background:rgba(200,144,10,0.12);border:1px solid rgba(200,144,10,0.25);color:var(--gold2);}
+.wpill-score{background:rgba(26,122,74,0.12);border:1px solid rgba(26,122,74,0.25);color:#4adc8a;}
+#connectBtn{font-family:'Lato',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.8px;padding:5px 14px;border-radius:3px;border:none;cursor:pointer;background:var(--gold);color:#fff;transition:all .15s;}
+#connectBtn:hover{background:#b07808;}
+
+/* BODY */
+.body{display:grid;grid-template-columns:188px 1fr 300px;flex:1;overflow:hidden;}
+
+/* NAV */
+.nav{background:var(--paper);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:12px 0;}
+.nav::-webkit-scrollbar{display:none;}
+.ns-title{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted);padding:0 14px;margin-bottom:3px;margin-top:12px;}
+.ns-title:first-child{margin-top:0;}
+.nbtn{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;font-family:'Lato',sans-serif;font-size:12px;font-weight:400;color:var(--ink3);border:none;background:none;width:100%;text-align:left;border-left:2px solid transparent;transition:all .12s;}
+.nbtn:hover{background:var(--cream2);color:var(--ink);border-left-color:var(--border2);}
+.nbtn.active{background:var(--goldbg);color:var(--gold);border-left-color:var(--gold);font-weight:700;}
+.nico{width:20px;height:20px;border-radius:3px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;}
+.nbtn.active .nico{background:rgba(200,144,10,0.14);}
+.ndiv{height:1px;background:var(--border);margin:8px 14px;}
+
+/* CENTER */
+.center{overflow-y:auto;background:var(--cream);padding:22px 24px;}
+.center::-webkit-scrollbar{width:4px;}
+.center::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.pg{display:none;}
+.pg.active{display:block;animation:pgin .18s ease;}
+@keyframes pgin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.pgh{margin-bottom:20px;}
+.pgtitle{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.3px;}
+.pgtitle span{color:var(--gold);}
+.pgsub{font-size:12px;color:var(--muted);margin-top:3px;}
+
+/* CARDS */
+.card{background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow);}
+.ctitle{font-family:'Syne',sans-serif;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+/* STATS */
+.stat{background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.stat:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 20px rgba(200,144,10,.12);}
+.stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);opacity:0;transition:opacity .15s;}
+.stat:hover::after{opacity:1;}
+.sval{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1;}
+.skey{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-top:5px;}
+.shint{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold);margin-top:4px;opacity:.7;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.7);backdrop-filter:blur(3px);z-index:1000;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;animation:mfade .15s ease;}
+@keyframes mfade{from{opacity:0}to{opacity:1}}
+.modal{background:var(--paper);border:1px solid var(--border);border-radius:8px;width:680px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.modal-close{width:28px;height:28px;border-radius:4px;border:none;background:var(--cream2);cursor:pointer;font-size:14px;color:var(--ink3);display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:var(--redbg);color:var(--red);}
+.modal-body{flex:1;overflow-y:auto;padding:16px 20px;}
+.modal-body::-webkit-scrollbar{width:4px;}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border2);}
+
+/* FORM */
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:5px;}
+.fg input,.fg select{width:100%;background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:8px 11px;color:var(--ink);font-size:13px;font-family:'Lato',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;appearance:none;}
+.fg input:focus,.fg select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,144,10,.1);}
+.fg input::placeholder{color:var(--muted);}
+
+/* BUTTONS */
+.btn{border:none;border-radius:4px;padding:9px 18px;font-size:11px;font-weight:700;font-family:'Lato',sans-serif;letter-spacing:0.8px;cursor:pointer;transition:all .15s;width:100%;}
+.btn-gold{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(200,144,10,.28);}
+.btn-gold:hover{background:#b07808;transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,144,10,.38);}
+.btn-gold:active{transform:translateY(0);}
+.btn-gold:disabled{background:#c8a060;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-out{background:transparent;color:var(--ink3);border:1px solid var(--border2);}
+.btn-out:hover{background:var(--cream2);border-color:var(--ink3);}
+.btn-sm{width:auto;padding:5px 12px;font-size:10px;}
+.brow{display:flex;gap:8px;}
+.brow .btn{flex:1;}
+
+/* RESULT */
+.result{margin-top:10px;padding:10px 13px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;display:none;line-height:1.7;word-break:break-all;}
+.result.ok{background:var(--greenbg);border:1px solid #a0d8b8;color:#0d5c35;}
+.result.err{background:var(--redbg);border:1px solid #e0b0a0;color:var(--red);}
+.result.run{background:var(--goldbg);border:1px solid var(--goldbrd);color:#7a5500;}
+.spin{display:inline-block;width:9px;height:9px;border:1.5px solid rgba(122,85,0,.3);border-top-color:var(--gold);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 7px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.5px;}
+.b-pending{background:var(--goldbg);color:#7a5500;border:1px solid var(--goldbrd);}
+.b-active{background:var(--greenbg);color:#0d5c35;border:1px solid #a0d8b8;}
+.b-repaid{background:var(--bluebg);color:var(--blue);border:1px solid #b0c8ee;}
+.b-defaulted{background:var(--redbg);color:var(--red);border:1px solid #e0b0a0;}
+.b-cancelled{background:var(--cream2);color:var(--muted);border:1px solid var(--border);}
+
+/* TABLES */
+.dtbl{width:100%;border-collapse:collapse;}
+.dtbl tr{border-bottom:1px solid var(--border);}
+.dtbl tr:last-child{border-bottom:none;}
+.dtbl td{padding:8px 0;font-size:12px;}
+.dk{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;}
+.dv{color:var(--ink);text-align:right;font-weight:700;}
+.dtue{width:100%;border-collapse:collapse;margin-top:10px;}
+.dtue tr{border-bottom:1px solid var(--border);}
+.dtue tr:last-child{background:var(--goldbg);border:none;}
+.dtue td{padding:8px 11px;font-size:12px;}
+.dtue .dk{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+.dtue .dv{text-align:right;font-weight:700;color:var(--ink);}
+.dtue tr:last-child .dv{color:var(--gold);font-family:'Syne',sans-serif;font-size:15px;}
+
+/* OFFER ROWS */
+.ofrow{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:4px;margin-bottom:8px;background:var(--cream);transition:all .15s;gap:10px;}
+.ofrow:hover{border-color:var(--border2);box-shadow:var(--shadow);}
+.ofrate{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--gold);line-height:1;}
+.ofmeta{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px;line-height:1.6;}
+.of-score-tag{display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 7px;border-radius:2px;margin-top:4px;}
+.score-good{background:var(--greenbg);color:#0d5c35;border:1px solid #a0d8b8;}
+.score-mid{background:var(--goldbg);color:#7a5500;border:1px solid var(--goldbrd);}
+.score-poor{background:var(--redbg);color:var(--red);border:1px solid #e0b0a0;}
+.score-none{background:var(--cream2);color:var(--muted);border:1px solid var(--border);}
+
+/* LOAN REQUEST LIST */
+.lreq-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.lreq-row{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border:1px solid var(--border);border-radius:4px;background:var(--cream);cursor:pointer;transition:all .15s;}
+.lreq-row:hover{border-color:var(--gold);box-shadow:var(--shadow);}
+.lreq-row.selected{border-color:var(--gold);background:var(--goldbg);}
+.lreq-id{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--gold);width:36px;flex-shrink:0;}
+.lreq-info{flex:1;padding:0 10px;}
+.lreq-purpose{font-size:12px;font-weight:700;color:var(--ink);}
+.lreq-meta{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;}
+.lreq-amount{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--ink);text-align:right;}
+
+/* CREDIT SCORE */
+.scorewrap{display:flex;flex-direction:column;align-items:center;padding:6px 0 12px;}
+.sringwrap{position:relative;width:130px;height:130px;margin:8px 0;}
+.sringwrap svg{transform:rotate(-90deg);}
+.sovlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.snum{font-family:'Syne',sans-serif;font-size:32px;font-weight:700;line-height:1;}
+.slbl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);margin-top:3px;}
+.sbar{width:100%;height:4px;background:var(--cream2);border-radius:2px;overflow:hidden;margin:6px 0 4px;}
+.sfill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.34,1.56,.64,1);}
+.srange{display:flex;justify-content:space-between;width:100%;font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);}
+
+.hint{padding:9px 13px;background:var(--goldbg);border:1px solid var(--goldbrd);border-radius:4px;font-size:11px;color:#7a5500;margin-bottom:14px;font-family:'IBM Plex Mono',monospace;}
+.empty{text-align:center;padding:24px 16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+
+/* DASHBOARD LOAN LIST */
+.dloan-row{display:flex;align-items:center;gap:10px;padding:10px 13px;border:1px solid var(--border);border-radius:4px;background:var(--cream);margin-bottom:7px;cursor:pointer;transition:all .12s;}
+.dloan-row:hover{border-color:var(--gold);box-shadow:var(--shadow);}
+.dloan-id{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--gold);width:34px;flex-shrink:0;}
+.dloan-info{flex:1;}
+.dloan-purpose{font-size:12px;font-weight:700;color:var(--ink);}
+.dloan-meta{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;}
+.dloan-right{text-align:right;}
+.dloan-amt{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--gold);}
+.pagrow{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+.paginfo{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);}
+
+/* RIGHT PANEL */
+.right{background:var(--ink);border-left:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;overflow:hidden;}
+.rph{padding:12px 16px 9px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
+.rptitle{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);}
+.rpsub{font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(255,255,255,0.16);margin-top:2px;}
+.rpfilters{display:flex;gap:4px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;flex-wrap:wrap;}
+.fchip{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:3px 7px;border-radius:2px;border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);cursor:pointer;transition:all .12s;letter-spacing:0.5px;background:none;}
+.fchip:hover{border-color:rgba(200,168,32,0.35);color:var(--gold2);}
+.fchip.on{background:rgba(200,168,32,0.12);border-color:rgba(200,168,32,0.38);color:var(--gold2);}
+#blockCanvas{flex:1;width:100%;display:block;cursor:default;}
+.bdetail{border-top:1px solid rgba(255,255,255,0.05);padding:12px 16px;flex-shrink:0;min-height:140px;max-height:170px;overflow-y:auto;}
+.bdetail::-webkit-scrollbar{display:none;}
+.bdnone{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,0.12);text-align:center;gap:5px;}
+.bdhash{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold2);margin-bottom:8px;word-break:break-all;}
+.bdrow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.bdrow:last-child{border-bottom:none;}
+.bdk{font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(255,255,255,0.26);text-transform:uppercase;letter-spacing:1px;}
+.bdv{font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(255,255,255,0.65);}
+
+/* METAMASK CONNECT SCREEN */
+.connect-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;padding:40px;}
+.connect-card{background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:36px 40px;max-width:420px;width:100%;text-align:center;box-shadow:var(--shadow);}
+.connect-icon{width:64px;height:64px;background:var(--gold);transform:rotate(45deg);margin:0 auto 24px;}
+.connect-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.connect-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px;}
+.connect-btn{background:var(--gold);color:#fff;border:none;border-radius:4px;padding:12px 28px;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.8px;cursor:pointer;width:100%;transition:all .15s;box-shadow:0 2px 8px rgba(200,144,10,.3);}
+.connect-btn:hover{background:#b07808;transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,144,10,.4);}
+.connect-note{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-top:14px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="logo"><div class="logo-diamond"></div>CREDICHAIN</div>
+    <div class="hdr-sep"></div>
+    <div class="hdr-tag">WEB3 · P2P LENDING</div>
+  </div>
+  <div class="hdr-right">
+    <div id="nodeStatus" class="hpill pill-live"><div class="ldot"></div>NODE LIVE</div>
+    <div class="hpill pill-net">HARDHAT · 31337</div>
+    <button id="connectBtn" onclick="connectWallet()">Connect MetaMask</button>
+  </div>
+</header>
+
+<!-- WALLET BAR -->
+<div class="wbar">
+  <div class="wbar-lbl">WALLET</div>
+  <div class="w-addr" id="walletAddr">Not connected — click Connect MetaMask above</div>
+  <div class="wbadge">
+    <span class="wpill wpill-bal" id="walletBal">— ETH</span>
+    <span class="wpill wpill-score" id="walletScore">Score —</span>
+  </div>
+</div>
+
+<div class="body">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="ns-title">Transactions</div>
+    <button class="nbtn active" onclick="showPg('request',this)"><span class="nico">◈</span>Request Loan</button>
+    <button class="nbtn" onclick="showPg('offer',this)"><span class="nico">◇</span>Make Offer</button>
+    <button class="nbtn" onclick="showPg('accept',this)"><span class="nico">◉</span>Accept Offer</button>
+    <button class="nbtn" onclick="showPg('repay',this)"><span class="nico">◎</span>Repay Loan</button>
+    <button class="nbtn" onclick="showPg('cancel',this)"><span class="nico">◌</span>Cancel Offer</button>
+    <div class="ndiv"></div>
+    <div class="ns-title">Data</div>
+    <button class="nbtn" onclick="showPg('loandetail',this)"><span class="nico">◫</span>Loan Details</button>
+    <button class="nbtn" onclick="showPg('viewoffers',this)"><span class="nico">◳</span>View Offers</button>
+    <button class="nbtn" onclick="showPg('due',this)"><span class="nico">◪</span>Amount Due</button>
+    <button class="nbtn" onclick="showPg('score',this)"><span class="nico">◐</span>Credit Score</button>
+    <div class="ndiv"></div>
+    <div class="ns-title">Overview</div>
+    <button class="nbtn" onclick="showPg('dashboard',this)"><span class="nico">◑</span>Dashboard</button>
+  </nav>
+
+  <!-- CENTER -->
+  <main class="center">
+
+    <!-- REQUEST LOAN -->
+    <div class="pg active" id="pg-request">
+      <div class="pgh"><div class="pgtitle">Request a <span>Loan</span></div><div class="pgsub">MetaMask will ask you to send ETH as collateral</div></div>
+      <div class="hint">Collateral must be &gt; 0 and ≤ loan amount. Locked in contract until repayment.</div>
+      <div class="card">
+        <div class="ctitle">Loan Parameters</div>
+        <div class="g2">
+          <div class="fg"><label>Loan Amount (ETH)</label><input type="number" id="loanAmount" placeholder="1.0" step="0.1" min="0.01"></div>
+          <div class="fg"><label>Collateral (ETH)</label><input type="number" id="collateral" placeholder="0.5" step="0.1" min="0.01"></div>
+          <div class="fg"><label>Duration (days, 1–365)</label><input type="number" id="duration" placeholder="30" min="1" max="365"></div>
+          <div class="fg"><label>Purpose (32 chars max)</label><input type="text" id="purpose" placeholder="Business expansion" maxlength="32"></div>
+        </div>
+        <button class="btn btn-gold" onclick="txRequestLoan()">Submit Loan Request</button>
+        <div class="result" id="res-request"></div>
+      </div>
+    </div>
+
+    <!-- MAKE OFFER -->
+    <div class="pg" id="pg-offer">
+      <div class="pgh"><div class="pgtitle">Make an <span>Offer</span></div><div class="pgsub">MetaMask will send the exact loan amount to the contract</div></div>
+      <div class="card">
+        <div class="ctitle">Open Loan Requests <button class="btn btn-out btn-sm" onclick="loadPendingLoans()">Refresh</button></div>
+        <div id="pendingLoansList"><div class="empty">Loading pending loans…</div></div>
+      </div>
+      <div class="card">
+        <div class="ctitle">Your Offer</div>
+        <div class="g2">
+          <div class="fg"><label>Loan ID</label><input type="number" id="offerLoanId" placeholder="Select above or type" min="1"></div>
+          <div class="fg"><label>Interest Rate (%, 1–100)</label><input type="number" id="interestRate" placeholder="10" min="1" max="100"></div>
+        </div>
+        <button class="btn btn-gold" onclick="txMakeOffer()">Send Offer</button>
+        <div class="result" id="res-offer"></div>
+      </div>
+    </div>
+
+    <!-- ACCEPT OFFER -->
+    <div class="pg" id="pg-accept">
+      <div class="pgh"><div class="pgtitle">Accept an <span>Offer</span></div><div class="pgsub">You must be the borrower of this loan</div></div>
+      <div class="card">
+        <div class="ctitle">Load Offers</div>
+        <div class="g2" style="margin-bottom:12px;">
+          <div class="fg" style="margin:0;"><label>Loan ID</label><input type="number" id="acceptLoanId" placeholder="1" min="1"></div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn btn-out" onclick="readViewOffers()">Load Offers</button></div>
+        </div>
+        <div id="offersList"></div>
+        <div class="result" id="res-accept"></div>
+      </div>
+    </div>
+
+    <!-- REPAY LOAN -->
+    <div class="pg" id="pg-repay">
+      <div class="pgh"><div class="pgtitle">Repay <span>Loan</span></div><div class="pgsub">Exact repayment amount calculated from contract — MetaMask sends it</div></div>
+      <div class="card">
+        <div class="ctitle">Repayment</div>
+        <div class="fg"><label>Loan ID</label><input type="number" id="repayLoanId" placeholder="1" min="1" oninput="autoPreviewDue(this.value)"></div>
+        <div id="repayPreview" style="margin-bottom:12px;"></div>
+        <div class="brow">
+          <button class="btn btn-out" onclick="readPreviewDue()">Preview Amount</button>
+          <button class="btn btn-gold" onclick="txRepayLoan()">Repay Now</button>
+        </div>
+        <div class="result" id="res-repay"></div>
+      </div>
+    </div>
+
+    <!-- CANCEL OFFER -->
+    <div class="pg" id="pg-cancel">
+      <div class="pgh"><div class="pgtitle">Cancel <span>Offer</span></div><div class="pgsub">Withdraw your offer and reclaim your ETH — only works if not yet accepted</div></div>
+      <div class="card">
+        <div class="ctitle">Cancel Parameters</div>
+        <div class="g2">
+          <div class="fg"><label>Loan ID</label><input type="number" id="cancelLoanId" placeholder="1" min="1"></div>
+          <div class="fg"><label>Your Offer Index</label><input type="number" id="cancelOfferIdx" placeholder="0" min="0"></div>
+        </div>
+        <button class="btn btn-out" style="border-color:var(--red);color:var(--red);" onclick="txCancelOffer()">Cancel Offer</button>
+        <div class="result" id="res-cancel"></div>
+      </div>
+    </div>
+
+    <!-- LOAN DETAILS -->
+    <div class="pg" id="pg-loandetail">
+      <div class="pgh"><div class="pgtitle">Loan <span>Details</span></div><div class="pgsub">Read directly from the contract — no wallet needed</div></div>
+      <div class="card">
+        <div class="ctitle">Lookup</div>
+        <div class="g2" style="margin-bottom:12px;">
+          <div class="fg" style="margin:0;"><label>Loan ID</label><input type="number" id="viewLoanId" placeholder="1" min="1"></div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn btn-out" onclick="readGetLoan()">Fetch Loan</button></div>
+        </div>
+        <div id="loanDetails"></div>
+      </div>
+    </div>
+
+    <!-- VIEW OFFERS -->
+    <div class="pg" id="pg-viewoffers">
+      <div class="pgh"><div class="pgtitle">View <span>Offers</span></div><div class="pgsub">All lender offers for a specific loan</div></div>
+      <div class="card">
+        <div class="ctitle">Offers</div>
+        <div class="g2" style="margin-bottom:12px;">
+          <div class="fg" style="margin:0;"><label>Loan ID</label><input type="number" id="voLoanId" placeholder="1" min="1"></div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn btn-out" onclick="readLoadOffers()">Load Offers</button></div>
+        </div>
+        <div id="voList"></div>
+      </div>
+    </div>
+
+    <!-- AMOUNT DUE -->
+    <div class="pg" id="pg-due">
+      <div class="pgh"><div class="pgtitle">Amount <span>Due</span></div><div class="pgsub">Principal + interest + late penalties — read from contract</div></div>
+      <div class="card">
+        <div class="ctitle">Due Breakdown</div>
+        <div class="g2" style="margin-bottom:12px;">
+          <div class="fg" style="margin:0;"><label>Loan ID</label><input type="number" id="dueLoanId" placeholder="1" min="1"></div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn btn-out" onclick="readCalcDue()">Calculate</button></div>
+        </div>
+        <div id="dueBreakdown"></div>
+      </div>
+    </div>
+
+    <!-- CREDIT SCORE -->
+    <div class="pg" id="pg-score">
+      <div class="pgh"><div class="pgtitle">Credit <span>Score</span></div><div class="pgsub">On-chain score from repayment history (300–900)</div></div>
+      <div class="card">
+        <div class="ctitle">Score Lookup</div>
+        <div class="fg"><label>Wallet Address</label><input type="text" id="scoreAddress" placeholder="0x..."></div>
+        <div class="brow">
+          <button class="btn btn-out" onclick="useWallet()">Use Connected Wallet</button>
+          <button class="btn btn-gold" onclick="readCheckScore()">Check Score</button>
+        </div>
+        <div id="scoreDisplay"></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="pg" id="pg-dashboard">
+      <div class="pgh"><div class="pgtitle"><span>Dashboard</span></div><div class="pgsub">Click any stat card to drill down</div></div>
+      <div class="g3" style="margin-bottom:14px;">
+        <div class="stat" onclick="openLoanModal()">
+          <div class="sval" id="statLoans">—</div>
+          <div class="skey">Total Loans</div>
+          <div class="shint">↗ click to browse</div>
+        </div>
+        <div class="stat">
+          <div class="sval" id="statActive">—</div>
+          <div class="skey">Active Loans</div>
+        </div>
+        <div class="stat">
+          <div class="sval" id="statChainId">31337</div>
+          <div class="skey">Chain ID</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle">Network Info</div>
+        <table class="dtbl">
+          <tr><td class="dk">RPC</td><td class="dv" style="font-family:'IBM Plex Mono',monospace;font-size:11px;">127.0.0.1:8545</td></tr>
+          <tr><td class="dk">Contract</td><td class="dv" style="font-family:'IBM Plex Mono',monospace;font-size:11px;" id="dashContract">0x5FbDB…0aa3</td></tr>
+          <tr><td class="dk">Late Penalty</td><td class="dv">2% / day</td></tr>
+          <tr><td class="dk">Grace Period</td><td class="dv">1 day</td></tr>
+        </table>
+        <button class="btn btn-out" style="margin-top:14px;" onclick="loadDashboard()">Refresh</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside class="right">
+    <div class="rph">
+      <div class="rptitle">Live Chain</div>
+      <div class="rpsub">Blocks appear on every transaction</div>
+    </div>
+    <div class="rpfilters">
+      <button class="fchip on" onclick="setFilter('all',this)">ALL</button>
+      <button class="fchip" onclick="setFilter('loan',this)">LOAN</button>
+      <button class="fchip" onclick="setFilter('offer',this)">OFFER</button>
+      <button class="fchip" onclick="setFilter('accept',this)">ACCEPT</button>
+      <button class="fchip" onclick="setFilter('repay',this)">REPAY</button>
+    </div>
+    <canvas id="blockCanvas"></canvas>
+    <div class="bdetail" id="blockDetail">
+      <div class="bdnone"><div style="font-size:18px;opacity:0.1;">◈</div><div>Select a block to inspect</div></div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- MODAL: ALL LOANS -->
+<div class="modal-overlay" id="loanModal" onclick="closeModal('loanModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-title">All Loans</div>
+      <button class="modal-close" onclick="closeModal('loanModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalLoanContent"><div class="empty">Loading…</div></div>
+      <div class="pagrow">
+        <div class="paginfo" id="loanPageInfo"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-out btn-sm" id="loanPrevBtn" onclick="loanPageNav(-1)">← Prev</button>
+          <button class="btn btn-out btn-sm" id="loanNextBtn" onclick="loanPageNav(1)">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONTRACT CONFIG — update address if redeployed
+// ══════════════════════════════════════════
+const CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+const HARDHAT_RPC      = 'http://127.0.0.1:8545';
+const CHAIN_ID         = 31337;
+
+// Full ABI — all functions we use
+const ABI = [
+  "function requestLoan(uint256 amount, uint256 durationInDays, bytes32 purpose) external payable",
+  "function makeOffer(uint256 loanId, uint256 interestRate) external payable",
+  "function acceptOffer(uint256 loanId, uint256 offerIndex) external",
+  "function cancelOffer(uint256 loanId, uint256 offerIndex) external",
+  "function repayLoan(uint256 loanId) external payable",
+  "function calculateTotalDue(uint256 loanId) external view returns (uint256 principal, uint256 interest, uint256 penalty, uint256 total)",
+  "function getLoan(uint256 loanId) external view returns (tuple(uint256 id, address borrower, address lender, uint256 amount, uint256 interestRate, uint256 duration, uint256 collateral, uint256 startTime, uint256 repaidAmount, bytes32 purpose, uint8 status))",
+  "function getLoansPage(uint256 startId, uint256 count) external view returns (tuple(uint256 id, address borrower, address lender, uint256 amount, uint256 interestRate, uint256 duration, uint256 collateral, uint256 startTime, uint256 repaidAmount, bytes32 purpose, uint8 status)[])",
+  "function getOffers(uint256 loanId) external view returns (tuple(address lender, uint256 interestRate, uint256 amount, bool accepted, bool refunded)[])",
+  "function getLoanCount() external view returns (uint256)",
+  "function getCreditScore(address user) external view returns (uint256)",
+  "function creditProfiles(address) external view returns (uint256 totalLoans, uint256 onTimeLoans, uint256 lateLoans, uint256 defaultedLoans, uint256 totalAmountBorrowed)",
+  "event LoanRequested(uint256 loanId, address borrower, uint256 amount)",
+  "event OfferMade(uint256 loanId, address lender, uint256 rate)",
+  "event OfferAccepted(uint256 loanId, address lender, uint256 rate)",
+  "event LoanRepaid(uint256 loanId, address borrower)",
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let provider = null;   // ethers provider (MetaMask)
+let signer   = null;   // connected wallet signer
+let roProvider = null; // read-only provider (no MetaMask needed for reads)
+let rwContract = null; // contract with signer  (writes)
+let roContract = null; // contract read-only    (reads)
+let walletAddr = null;
+let totalLoans = 0;
+let loanPageStart = 1;
+const LOAN_PAGE_SIZE = 8;
+let previewDebounce = null;
+const SN = ['PENDING','ACTIVE','REPAID','DEFAULTED','CANCELLED'];
+const SC = ['b-pending','b-active','b-repaid','b-defaulted','b-cancelled'];
+
+// ── Read-only provider — works even before MetaMask connect ──
+function initReadOnly() {
+  try {
+    roProvider = new ethers.providers.JsonRpcProvider(HARDHAT_RPC);
+    roContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, roProvider);
+  } catch(e) { console.warn('Read-only provider failed:', e); }
+}
+
+// ══════════════════════════════════════════
+// METAMASK CONNECT
+// ══════════════════════════════════════════
+async function connectWallet() {
+  if (!window.ethereum) {
+    alert('MetaMask not detected.\n\nInstall MetaMask browser extension, then add Hardhat network:\nRPC: http://127.0.0.1:8545\nChain ID: 31337');
+    return;
+  }
+  try {
+    // request accounts
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+    // check / switch to hardhat network
+    const chainHex = '0x' + CHAIN_ID.toString(16);
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: chainHex }],
+      });
+    } catch(switchErr) {
+      // code 4902 = chain not added yet, add it
+      // any other error we just try to continue — user may already be on right network
+      if (switchErr.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{ chainId: chainHex, chainName: 'Hardhat Local', rpcUrls: [HARDHAT_RPC], nativeCurrency: { name:'ETH', symbol:'ETH', decimals:18 } }],
+          });
+        } catch(addErr) {
+          console.warn('Could not add chain:', addErr);
+        }
+      } else {
+        console.warn('Chain switch warning (continuing):', switchErr.message);
+      }
+    }
+
+    provider  = new ethers.providers.Web3Provider(window.ethereum);
+    signer    = provider.getSigner();
+    walletAddr = await signer.getAddress();
+
+    rwContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    roContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+
+    updateWalletUI();
+    updateConnectBtn();
+    loadDashboard();
+
+    // snapshot current block — only listen to events FROM NOW, not replayed past events
+    const fromBlock = await provider.getBlockNumber();
+
+    // listen for account / network changes
+    window.ethereum.on('accountsChanged', accs => {
+      walletAddr = accs[0] || null;
+      if (walletAddr) {
+        signer = provider.getSigner();
+        rwContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+        updateWalletUI();
+      } else {
+        walletAddr = null;
+        updateConnectBtn();
+      }
+    });
+
+    // listen to contract events — filtered to only fire for blocks AFTER connect
+    const filter_loan   = rwContract.filters.LoanRequested();
+    const filter_offer  = rwContract.filters.OfferMade();
+    const filter_accept = rwContract.filters.OfferAccepted();
+    const filter_repay  = rwContract.filters.LoanRepaid();
+
+    rwContract.on(filter_loan, (id, borrower, amount, event) => {
+      if (event.blockNumber <= fromBlock) return;
+      mkBlock('loan', event.transactionHash, event.blockNumber, {'Loan #': id.toString(), 'Amount': fmt(amount)+' ETH'});
+    });
+    rwContract.on(filter_offer, (id, lender, rate, event) => {
+      if (event.blockNumber <= fromBlock) return;
+      mkBlock('offer', event.transactionHash, event.blockNumber, {'Loan #': id.toString(), 'Rate': rate.toString()+'%'});
+    });
+    rwContract.on(filter_accept, (id, lender, rate, event) => {
+      if (event.blockNumber <= fromBlock) return;
+      mkBlock('accept', event.transactionHash, event.blockNumber, {'Loan #': id.toString()});
+    });
+    rwContract.on(filter_repay, (id, borrower, event) => {
+      if (event.blockNumber <= fromBlock) return;
+      mkBlock('repay', event.transactionHash, event.blockNumber, {'Loan #': id.toString()});
+    });
+
+  } catch(e) {
+    console.error(e);
+    alert('Connection failed: ' + (e.message || e));
+  }
+}
+
+async function updateWalletUI() {
+  if (!walletAddr) return;
+  document.getElementById('walletAddr').textContent = walletAddr;
+  try {
+    const bal = await provider.getBalance(walletAddr);
+    document.getElementById('walletBal').textContent = parseFloat(ethers.utils.formatEther(bal)).toFixed(4) + ' ETH';
+  } catch(e) {}
+  try {
+    const score = await roContract.getCreditScore(walletAddr);
+    document.getElementById('walletScore').textContent = 'Score ' + score.toString();
+  } catch(e) {}
+}
+
+function updateConnectBtn() {
+  const btn = document.getElementById('connectBtn');
+  if (walletAddr) {
+    btn.textContent = walletAddr.slice(0,8) + '…' + walletAddr.slice(-4);
+    btn.style.background = '#1a7a4a';
+  } else {
+    btn.textContent = 'Connect MetaMask';
+    btn.style.background = '';
+  }
+}
+
+function requireWallet() {
+  if (!walletAddr || !rwContract) {
+    alert('Connect MetaMask first (top right button).');
+    return false;
+  }
+  return true;
+}
+
+function useWallet() {
+  if (walletAddr) document.getElementById('scoreAddress').value = walletAddr;
+}
+
+// ══════════════════════════════════════════
+// NODE STATUS CHECK
+// ══════════════════════════════════════════
+async function checkNode() {
+  try {
+    await roProvider.getBlockNumber();
+    document.getElementById('nodeStatus').className = 'hpill pill-live';
+    document.getElementById('nodeStatus').innerHTML = '<div class="ldot"></div>NODE LIVE';
+  } catch(e) {
+    document.getElementById('nodeStatus').className = 'hpill pill-dead';
+    document.getElementById('nodeStatus').innerHTML = '<div class="ddot"></div>OFFLINE';
+  }
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function fmt(wei) { return parseFloat(ethers.utils.formatEther(wei)).toFixed(4); }
+function toWei(eth) { return ethers.utils.parseEther(eth.toString()); }
+function b32str(b) {
+  try { return ethers.utils.toUtf8String(b).replace(/\0/g,''); } catch(e) { return ''; }
+}
+function loanObj(l) {
+  return {
+    id:           l.id.toNumber(),
+    borrower:     l.borrower,
+    lender:       l.lender,
+    amount:       fmt(l.amount),
+    interestRate: l.interestRate.toNumber(),
+    duration:     l.duration.toNumber(),
+    durationDays: Math.round(l.duration.toNumber() / 86400),
+    collateral:   fmt(l.collateral),
+    startTime:    l.startTime.toNumber(),
+    repaidAmount: fmt(l.repaidAmount),
+    purpose:      b32str(l.purpose),
+    status:       l.status,
+  };
+}
+function scoreTag(score) {
+  const s = typeof score === 'object' ? score.toNumber() : score;
+  if (s === 600) return `<span class="of-score-tag score-none">No borrow history</span>`;
+  const cls = s >= 750 ? 'score-good' : s >= 600 ? 'score-mid' : 'score-poor';
+  const lbl = s >= 750 ? 'Excellent' : s >= 600 ? 'Good' : 'Poor';
+  return `<span class="of-score-tag ${cls}">Lender score: ${s} · ${lbl}</span>`;
+}
+
+function res(id, type, html) {
+  const el = document.getElementById(id);
+  el.style.display = 'block'; el.className = 'result ' + type;
+  el.innerHTML = type === 'run' ? `<span class="spin"></span>${html}` : html;
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showPg(name, btn) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pg-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'offer') loadPendingLoans();
+}
+
+// ══════════════════════════════════════════
+// WRITE TRANSACTIONS (require MetaMask)
+// ══════════════════════════════════════════
+async function txRequestLoan() {
+  if (!requireWallet()) return;
+  res('res-request', 'run', 'Waiting for MetaMask confirmation…');
+  try {
+    const amount   = document.getElementById('loanAmount').value;
+    const col      = document.getElementById('collateral').value;
+    const duration = parseInt(document.getElementById('duration').value);
+    const purpose  = document.getElementById('purpose').value || '';
+    const purpBytes = ethers.utils.formatBytes32String(purpose.slice(0,31));
+
+    const tx = await rwContract.requestLoan(toWei(amount), duration, purpBytes, {
+      value: toWei(col)
+    });
+    res('res-request', 'run', `TX sent — waiting for block… ${tx.hash.slice(0,22)}…`);
+    const receipt = await tx.wait();
+    res('res-request', 'ok', `Loan created · TX: ${tx.hash.slice(0,22)}… · Block #${receipt.blockNumber}`);
+    updateWalletUI();
+  } catch(e) {
+    res('res-request', 'err', e.reason || e.message);
+  }
+}
+
+async function txMakeOffer() {
+  if (!requireWallet()) return;
+  res('res-offer', 'run', 'Waiting for MetaMask confirmation…');
+  try {
+    const loanId = parseInt(document.getElementById('offerLoanId').value);
+    const rate   = parseInt(document.getElementById('interestRate').value);
+    // fetch loan amount from contract so we send exactly right value
+    const loan   = await roContract.getLoan(loanId);
+    const tx = await rwContract.makeOffer(loanId, rate, { value: loan.amount });
+    res('res-offer', 'run', `TX sent — waiting… ${tx.hash.slice(0,22)}…`);
+    const receipt = await tx.wait();
+    res('res-offer', 'ok', `Offer submitted · TX: ${tx.hash.slice(0,22)}… · Block #${receipt.blockNumber}`);
+    updateWalletUI();
+  } catch(e) {
+    res('res-offer', 'err', e.reason || e.message);
+  }
+}
+
+async function txAcceptOffer(offerIndex) {
+  if (!requireWallet()) return;
+  res('res-accept', 'run', 'Waiting for MetaMask confirmation…');
+  const loanId = parseInt(document.getElementById('acceptLoanId').value);
+  try {
+    const tx = await rwContract.acceptOffer(loanId, offerIndex);
+    res('res-accept', 'run', `TX sent — waiting… ${tx.hash.slice(0,22)}…`);
+    const receipt = await tx.wait();
+    res('res-accept', 'ok', `Offer accepted — Loan ACTIVE · TX: ${tx.hash.slice(0,22)}… · Block #${receipt.blockNumber}`);
+    mkBlock('accept', tx.hash, receipt.blockNumber, {'Loan #': loanId, 'Block #': receipt.blockNumber});
+    readViewOffers();
+    updateWalletUI();
+  } catch(e) {
+    res('res-accept', 'err', e.reason || e.message);
+  }
+}
+
+async function txRepayLoan() {
+  if (!requireWallet()) return;
+  res('res-repay', 'run', 'Calculating due amount…');
+  const loanId = parseInt(document.getElementById('repayLoanId').value);
+  try {
+    const due = await roContract.calculateTotalDue(loanId);
+    res('res-repay', 'run', `Due: ${fmt(due.total)} ETH — waiting for MetaMask…`);
+    const tx = await rwContract.repayLoan(loanId, { value: due.total });
+    res('res-repay', 'run', `TX sent — waiting… ${tx.hash.slice(0,22)}…`);
+    const receipt = await tx.wait();
+    res('res-repay', 'ok', `Loan repaid — collateral returned · TX: ${tx.hash.slice(0,22)}… · Block #${receipt.blockNumber}`);
+    mkBlock('repay', tx.hash, receipt.blockNumber, {'Loan #': loanId, 'Block #': receipt.blockNumber});
+    updateWalletUI();
+  } catch(e) {
+    res('res-repay', 'err', e.reason || e.message);
+  }
+}
+
+async function txCancelOffer() {
+  if (!requireWallet()) return;
+  res('res-cancel', 'run', 'Waiting for MetaMask confirmation…');
+  const loanId = parseInt(document.getElementById('cancelLoanId').value);
+  const idx    = parseInt(document.getElementById('cancelOfferIdx').value);
+  try {
+    const tx = await rwContract.cancelOffer(loanId, idx);
+    res('res-cancel', 'run', `TX sent — waiting… ${tx.hash.slice(0,22)}…`);
+    const receipt = await tx.wait();
+    res('res-cancel', 'ok', `Offer cancelled — ETH refunded · TX: ${tx.hash.slice(0,22)}… · Block #${receipt.blockNumber}`);
+    updateWalletUI();
+  } catch(e) {
+    res('res-cancel', 'err', e.reason || e.message);
+  }
+}
+
+// ══════════════════════════════════════════
+// READ CALLS (no MetaMask needed)
+// ══════════════════════════════════════════
+async function readGetLoan() {
+  const loanId = parseInt(document.getElementById('viewLoanId').value);
+  const el = document.getElementById('loanDetails');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const raw = await roContract.getLoan(loanId);
+    const l = loanObj(raw);
+    const deadline = l.startTime > 0 ? new Date((l.startTime + l.duration) * 1000).toLocaleString() : 'Not started';
+    el.innerHTML = `<table class="dtbl">
+      <tr><td class="dk">Loan ID</td><td class="dv">#${l.id}</td></tr>
+      <tr><td class="dk">Status</td><td class="dv"><span class="badge ${SC[l.status]}">${SN[l.status]}</span></td></tr>
+      <tr><td class="dk">Purpose</td><td class="dv">${l.purpose||'—'}</td></tr>
+      <tr><td class="dk">Borrower</td><td class="dv" style="font-family:'IBM Plex Mono',monospace;font-size:10px;">${l.borrower}</td></tr>
+      <tr><td class="dk">Lender</td><td class="dv" style="font-family:'IBM Plex Mono',monospace;font-size:10px;">${l.lender==='0x0000000000000000000000000000000000000000'?'Unassigned':l.lender}</td></tr>
+      <tr><td class="dk">Amount</td><td class="dv">${l.amount} ETH</td></tr>
+      <tr><td class="dk">Interest Rate</td><td class="dv">${l.interestRate}%</td></tr>
+      <tr><td class="dk">Duration</td><td class="dv">${l.durationDays} days</td></tr>
+      <tr><td class="dk">Collateral</td><td class="dv">${l.collateral} ETH</td></tr>
+      <tr><td class="dk">Repaid</td><td class="dv">${l.repaidAmount} ETH</td></tr>
+      <tr><td class="dk">Deadline</td><td class="dv" style="font-size:11px;">${deadline}</td></tr>
+    </table>`;
+  } catch(e) { el.innerHTML = `<div class="empty" style="color:var(--red);">${e.reason||e.message}</div>`; }
+}
+
+async function readViewOffers() {
+  const loanId = parseInt(document.getElementById('acceptLoanId').value);
+  const list = document.getElementById('offersList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const offers = await roContract.getOffers(loanId);
+    if (!offers.length) { list.innerHTML = '<div class="empty">No offers yet for this loan</div>'; return; }
+    list.innerHTML = await Promise.all(offers.map(async (o, i) => {
+      let lScore = 600;
+      try { lScore = (await roContract.getCreditScore(o.lender)).toNumber(); } catch(e) {}
+      return `<div class="ofrow">
+        <div style="flex:1">
+          <div class="ofrate">${o.interestRate}%</div>
+          <div class="ofmeta">${o.lender.slice(0,10)}…${o.lender.slice(-6)} · ${fmt(o.amount)} ETH</div>
+          ${scoreTag(lScore)}
+          <div style="margin-top:5px;"><span class="badge ${o.accepted?'b-active':o.refunded?'b-cancelled':'b-pending'}">${o.accepted?'ACCEPTED':o.refunded?'REFUNDED':'PENDING'}</span></div>
+        </div>
+        ${!o.accepted && !o.refunded ? `<button class="btn btn-gold btn-sm" onclick="txAcceptOffer(${i})">Accept</button>` : ''}
+      </div>`;
+    })).then(rows => rows.join(''));
+  } catch(e) { list.innerHTML = `<div class="empty" style="color:var(--red);">${e.reason||e.message}</div>`; }
+}
+
+async function readLoadOffers() {
+  const loanId = parseInt(document.getElementById('voLoanId').value);
+  const list = document.getElementById('voList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const offers = await roContract.getOffers(loanId);
+    if (!offers.length) { list.innerHTML = '<div class="empty">No offers for this loan</div>'; return; }
+    list.innerHTML = offers.map((o, i) => `
+      <div class="ofrow">
+        <div>
+          <div class="ofrate">${o.interestRate}%</div>
+          <div class="ofmeta">${o.lender.slice(0,10)}…${o.lender.slice(-6)} · ${fmt(o.amount)} ETH</div>
+          <div style="margin-top:5px;"><span class="badge ${o.accepted?'b-active':o.refunded?'b-cancelled':'b-pending'}">${o.accepted?'ACCEPTED':o.refunded?'REFUNDED':'PENDING'}</span></div>
+        </div>
+      </div>`).join('');
+  } catch(e) { list.innerHTML = `<div class="empty" style="color:var(--red);">${e.reason||e.message}</div>`; }
+}
+
+async function readCalcDue() {
+  const loanId = parseInt(document.getElementById('dueLoanId').value);
+  const el = document.getElementById('dueBreakdown');
+  el.innerHTML = '<div class="empty">Calculating…</div>';
+  try {
+    const d = await roContract.calculateTotalDue(loanId);
+    const pen = !d.penalty.isZero();
+    el.innerHTML = `<table class="dtue">
+      <tr><td class="dk">Principal</td><td class="dv">${fmt(d.principal)} ETH</td></tr>
+      <tr><td class="dk">Interest</td><td class="dv">${fmt(d.interest)} ETH</td></tr>
+      <tr><td class="dk">Late Penalty</td><td class="dv" style="color:${pen?'var(--red)':'var(--muted)'};">${pen?fmt(d.penalty)+' ETH':'None'}</td></tr>
+      <tr><td class="dk">Total Due</td><td class="dv">${fmt(d.total)} ETH</td></tr>
+    </table>`;
+  } catch(e) { el.innerHTML = `<div class="empty" style="color:var(--red);">${e.reason||e.message}</div>`; }
+}
+
+async function readPreviewDue() {
+  const loanId = document.getElementById('repayLoanId').value;
+  if (!loanId) return;
+  await renderDuePreview(parseInt(loanId));
+}
+
+async function autoPreviewDue(val) {
+  clearTimeout(previewDebounce);
+  if (!val) { document.getElementById('repayPreview').innerHTML = ''; return; }
+  previewDebounce = setTimeout(() => renderDuePreview(parseInt(val)), 600);
+}
+
+async function renderDuePreview(loanId) {
+  const div = document.getElementById('repayPreview');
+  div.innerHTML = '<div class="empty" style="padding:8px;">Calculating…</div>';
+  try {
+    const d = await roContract.calculateTotalDue(loanId);
+    const pen = !d.penalty.isZero();
+    div.innerHTML = `<table class="dtue">
+      <tr><td class="dk">Principal</td><td class="dv">${fmt(d.principal)} ETH</td></tr>
+      <tr><td class="dk">Interest</td><td class="dv">${fmt(d.interest)} ETH</td></tr>
+      <tr><td class="dk">Late Penalty</td><td class="dv" style="color:${pen?'var(--red)':'var(--muted)'};">${pen?fmt(d.penalty)+' ETH':'None'}</td></tr>
+      <tr><td class="dk">Total Due</td><td class="dv">${fmt(d.total)} ETH</td></tr>
+    </table>`;
+  } catch(e) { div.innerHTML = `<div style="color:var(--red);font-size:11px;padding:6px 0;">${e.reason||e.message}</div>`; }
+}
+
+async function readCheckScore() {
+  const address = document.getElementById('scoreAddress').value.trim();
+  const el = document.getElementById('scoreDisplay');
+  if (!address) { el.innerHTML = '<div class="empty" style="color:var(--red);">Enter an address</div>'; return; }
+  el.innerHTML = '<div class="empty">Fetching…</div>';
+  try {
+    const score = (await roContract.getCreditScore(address)).toNumber();
+    const prof  = await roContract.creditProfiles(address);
+    const pct   = Math.min(100, Math.max(0, ((score - 300) / 600) * 100));
+    const color = score >= 750 ? '#1a7a4a' : score >= 600 ? '#c8900a' : '#b03020';
+    const label = score >= 750 ? 'EXCELLENT' : score >= 600 ? 'GOOD' : 'POOR';
+    const R = 50, circ = 2 * Math.PI * R, dash = (pct / 100) * circ;
+    el.innerHTML = `<div class="scorewrap">
+      <div class="sringwrap">
+        <svg viewBox="0 0 130 130" width="130" height="130">
+          <circle cx="65" cy="65" r="${R}" fill="none" stroke="var(--cream2)" stroke-width="9"/>
+          <circle cx="65" cy="65" r="${R}" fill="none" stroke="${color}" stroke-width="9"
+            stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"/>
+        </svg>
+        <div class="sovlay">
+          <div class="snum" style="color:${color};">${score}</div>
+          <div class="slbl">${label}</div>
+        </div>
+      </div>
+      <div class="sbar" style="width:170px;"><div class="sfill" style="width:${pct.toFixed(1)}%;background:${color};"></div></div>
+      <div class="srange" style="width:170px;"><span>300</span><span>600</span><span>900</span></div>
+      <table class="dtbl" style="margin-top:14px;width:200px;">
+        <tr><td class="dk">Total Loans</td><td class="dv">${prof.totalLoans.toString()}</td></tr>
+        <tr><td class="dk">On Time</td><td class="dv" style="color:var(--green);">${prof.onTimeLoans.toString()}</td></tr>
+        <tr><td class="dk">Late</td><td class="dv" style="color:var(--gold);">${prof.lateLoans.toString()}</td></tr>
+        <tr><td class="dk">Defaulted</td><td class="dv" style="color:var(--red);">${prof.defaultedLoans.toString()}</td></tr>
+      </table>
+    </div>`;
+  } catch(e) { el.innerHTML = `<div class="empty" style="color:var(--red);">${e.reason||e.message}</div>`; }
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const count = (await roContract.getLoanCount()).toNumber();
+    totalLoans = count;
+    document.getElementById('statLoans').textContent = count;
+    document.getElementById('dashContract').textContent = CONTRACT_ADDRESS.slice(0,10)+'…'+CONTRACT_ADDRESS.slice(-4);
+    if (count === 0) { document.getElementById('statActive').textContent = '0'; return; }
+    const loans = await roContract.getLoansPage(1, Math.min(count, 50));
+    const active = loans.filter(l => l.status === 1).length;
+    document.getElementById('statActive').textContent = active;
+  } catch(e) {}
+}
+
+async function loadPendingLoans() {
+  const el = document.getElementById('pendingLoansList');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const count = (await roContract.getLoanCount()).toNumber();
+    if (count === 0) { el.innerHTML = '<div class="empty">No loans exist yet</div>'; return; }
+    const loans = await roContract.getLoansPage(1, Math.min(count, 50));
+    const pending = loans.filter(l => l.status === 0).map(loanObj);
+    if (!pending.length) { el.innerHTML = '<div class="empty">No open loan requests right now</div>'; return; }
+    el.innerHTML = '<div class="lreq-list">' + pending.map(l => `
+      <div class="lreq-row" id="lreq-${l.id}" onclick="selectLoan(${l.id})">
+        <div class="lreq-id">#${l.id}</div>
+        <div class="lreq-info">
+          <div class="lreq-purpose">${l.purpose||'—'}</div>
+          <div class="lreq-meta">${l.borrower.slice(0,10)}…${l.borrower.slice(-6)} · ${l.durationDays}d · Col: ${l.collateral} ETH</div>
+        </div>
+        <div class="lreq-amount">${l.amount} ETH</div>
+      </div>`).join('') + '</div>';
+  } catch(e) { el.innerHTML = `<div class="empty" style="color:var(--red);">${e.reason||e.message}</div>`; }
+}
+
+function selectLoan(id) {
+  document.querySelectorAll('.lreq-row').forEach(r => r.classList.remove('selected'));
+  const row = document.getElementById('lreq-' + id);
+  if (row) row.classList.add('selected');
+  document.getElementById('offerLoanId').value = id;
+}
+
+// ══════════════════════════════════════════
+// LOAN MODAL
+// ══════════════════════════════════════════
+async function openLoanModal() {
+  loanPageStart = 1;
+  document.getElementById('loanModal').classList.add('open');
+  await fetchLoanPage();
+}
+async function loanPageNav(dir) {
+  const n = loanPageStart + dir * LOAN_PAGE_SIZE;
+  if (n < 1 || n > totalLoans) return;
+  loanPageStart = n;
+  await fetchLoanPage();
+}
+async function fetchLoanPage() {
+  const el = document.getElementById('modalLoanContent');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const raw = await roContract.getLoansPage(loanPageStart, LOAN_PAGE_SIZE);
+    if (!raw.length) { el.innerHTML = '<div class="empty">No loans in this range</div>'; return; }
+    const loans = raw.map(loanObj);
+    el.innerHTML = loans.map(l => `
+      <div class="dloan-row" onclick="closeModal('loanModal');document.getElementById('viewLoanId').value=${l.id};showPg('loandetail',null)">
+        <div class="dloan-id">#${l.id}</div>
+        <div class="dloan-info">
+          <div class="dloan-purpose">${l.purpose||'—'}</div>
+          <div class="dloan-meta">${l.borrower.slice(0,10)}…${l.borrower.slice(-6)} · ${l.durationDays}d</div>
+        </div>
+        <div class="dloan-right">
+          <div class="dloan-amt">${l.amount} ETH</div>
+          <div style="margin-top:4px;"><span class="badge ${SC[l.status]}">${SN[l.status]}</span></div>
+        </div>
+      </div>`).join('');
+    const end = Math.min(loanPageStart + LOAN_PAGE_SIZE - 1, totalLoans);
+    document.getElementById('loanPageInfo').textContent = `Showing ${loanPageStart}–${end} of ${totalLoans}`;
+    document.getElementById('loanPrevBtn').disabled = loanPageStart <= 1;
+    document.getElementById('loanNextBtn').disabled = end >= totalLoans;
+  } catch(e) { el.innerHTML = `<div class="empty" style="color:var(--red);">${e.reason||e.message}</div>`; }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══════════════════════════════════════════
+// BLOCK CHAIN CANVAS VISUALIZER
+// ══════════════════════════════════════════
+const canvas = document.getElementById('blockCanvas');
+const ctx = canvas.getContext('2d');
+const CHAIN = [];
+let selectedBlock = null;
+let activeFilter = 'all';
+const TX_LABELS = { loan:'LOAN', offer:'OFFER', accept:'ACCEPT', repay:'REPAY', genesis:'GENESIS' };
+const TX_COLORS = { loan:'#c8900a', offer:'#3a6ed0', accept:'#1a7a4a', repay:'#8040b8', genesis:'#505060' };
+const TX_ICONS  = { loan:'◈', offer:'◇', accept:'◉', repay:'◎', genesis:'○' };
+
+let blockCounter = 1; // sequential visual counter — independent of chain block numbers
+
+function mkBlock(txType, txHash, blockNum, detail) {
+  const fullDetail = blockNum ? { ...detail, 'Chain Block': '#'+blockNum } : detail;
+  CHAIN.push({ num:blockCounter++, txType, txHash:txHash||'—', ts:Date.now(),
+    hash:'0x'+Math.random().toString(16).slice(2,10)+Math.random().toString(16).slice(2,10),
+    detail:fullDetail, alpha:0, animated:false, x:0, y:0, w:64, h:46 });
+  layoutChain(); kickAnim();
+}
+
+function layoutChain() {
+  const W=canvas.width, bw=64, bh=46, gx=12, gy=16, sx=14, sy=16;
+  const perRow=Math.max(1,Math.floor((W-sx*2+gx)/(bw+gx)));
+  CHAIN.forEach((b,i)=>{
+    const row=Math.floor(i/perRow);
+    const col=row%2===0?i%perRow:(perRow-1-i%perRow);
+    b.x=sx+col*(bw+gx)+bw/2; b.y=sy+row*(bh+gy)+bh/2; b.w=bw; b.h=bh;
+  });
+}
+
+let animRunning=false;
+function kickAnim(){ if(!animRunning){animRunning=true;requestAnimationFrame(loopAnim);} }
+function loopAnim(){
+  let dirty=false;
+  CHAIN.forEach(b=>{ if(!b.animated){b.alpha=Math.min(1,b.alpha+0.08);if(b.alpha>=1)b.animated=true;dirty=true;} });
+  drawChain();
+  if(dirty)requestAnimationFrame(loopAnim); else animRunning=false;
+}
+
+function drawChain(){
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const vis=CHAIN.filter(b=>activeFilter==='all'||b.txType===activeFilter||b.txType==='genesis');
+  ctx.setLineDash([3,5]); ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=1;
+  for(let i=1;i<vis.length;i++){const a=vis[i-1],b=vis[i];ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+  ctx.setLineDash([]);
+  vis.forEach(b=>{
+    const col=TX_COLORS[b.txType]||TX_COLORS.genesis;
+    const isSel=selectedBlock&&selectedBlock.num===b.num;
+    ctx.save(); ctx.globalAlpha=b.alpha;
+    if(isSel){ctx.shadowColor=col;ctx.shadowBlur=14;}
+    ctx.fillStyle=isSel?col:'rgba(255,255,255,0.035)';
+    ctx.strokeStyle=col+(isSel?'ff':'88'); ctx.lineWidth=isSel?1.5:1;
+    rrect(ctx,b.x-b.w/2,b.y-b.h/2,b.w,b.h,5); ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
+    ctx.fillStyle=isSel?'rgba(0,0,0,0.5)':(col+'cc');
+    ctx.font='9px "IBM Plex Mono",monospace'; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText(TX_ICONS[b.txType]||'?',b.x-b.w/2+5,b.y-b.h/2+4);
+    ctx.fillStyle=isSel?'#000':'#fff'; ctx.globalAlpha=b.alpha*(isSel?1:0.85);
+    ctx.font='700 12px "Syne",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('#'+b.num,b.x,b.y-5);
+    ctx.fillStyle=isSel?'rgba(0,0,0,0.55)':(col+'bb'); ctx.globalAlpha=b.alpha;
+    ctx.font='500 7px "IBM Plex Mono",monospace';
+    ctx.fillText(TX_LABELS[b.txType]||'',b.x,b.y+8);
+    if(b.detail&&b.detail['Loan #']){
+      ctx.fillStyle=isSel?'rgba(0,0,0,0.4)':'rgba(255,255,255,0.35)';
+      ctx.font='400 6px "IBM Plex Mono",monospace';
+      ctx.fillText('L#'+b.detail['Loan #'],b.x,b.y+18);
+    }
+    ctx.restore();
+  });
+}
+
+function rrect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
+}
+
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(canvas.width/rect.width);
+  const my=(e.clientY-rect.top)*(canvas.height/rect.height);
+  selectedBlock=null;
+  CHAIN.forEach(b=>{if(mx>=b.x-b.w/2&&mx<=b.x+b.w/2&&my>=b.y-b.h/2&&my<=b.y+b.h/2)selectedBlock=b;});
+  drawChain(); showBlockDetail(selectedBlock);
+});
+
+function showBlockDetail(b){
+  const el=document.getElementById('blockDetail');
+  if(!b){el.innerHTML='<div class="bdnone"><div style="font-size:18px;opacity:0.1;">◈</div><div>Select a block to inspect</div></div>';return;}
+  const col=TX_COLORS[b.txType]||TX_COLORS.genesis;
+  const age=Math.round((Date.now()-b.ts)/1000);
+  const extras=b.detail?Object.entries(b.detail).map(([k,v])=>`<div class="bdrow"><span class="bdk">${k}</span><span class="bdv">${v}</span></div>`).join(''):'';
+  el.innerHTML=`<div class="bdhash">${b.hash}</div>
+    <div class="bdrow"><span class="bdk">Block</span><span class="bdv" style="color:${col};">#${b.num}</span></div>
+    <div class="bdrow"><span class="bdk">Type</span><span class="bdv" style="color:${col};">${TX_LABELS[b.txType]||'?'}</span></div>
+    <div class="bdrow"><span class="bdk">TX</span><span class="bdv">${b.txHash.length>20?b.txHash.slice(0,18)+'…':b.txHash}</span></div>
+    <div class="bdrow"><span class="bdk">Age</span><span class="bdv">${age}s ago</span></div>${extras}`;
+}
+
+function setFilter(f,el){
+  activeFilter=f;
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); drawChain();
+}
+
+function resizeCanvas(){
+  const aside=canvas.parentElement;
+  const filH=document.querySelector('.rpfilters').offsetHeight;
+  const hedH=document.querySelector('.rph').offsetHeight;
+  const detH=document.getElementById('blockDetail').offsetHeight;
+  canvas.width=aside.clientWidth;
+  canvas.height=Math.max(80,aside.clientHeight-hedH-filH-detH);
+  layoutChain(); drawChain();
+}
+window.addEventListener('resize',resizeCanvas);
+
+// genesis
+CHAIN.push({num:0,txType:'genesis',txHash:'—',ts:Date.now(),hash:'0x0000000000000000',detail:{Note:'Hardhat node'},alpha:1,animated:true,x:0,y:0,w:64,h:46});
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+initReadOnly();
+checkNode();
+setInterval(checkNode, 12000);
+loadDashboard();
+setTimeout(()=>{ resizeCanvas(); drawChain(); }, 150);
+</script>
+</body>
+</html>
