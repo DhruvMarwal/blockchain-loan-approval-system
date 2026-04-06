@@ -18,7 +18,6 @@ Traditional lending requires a bank as a middleman. CrediChain eliminates this b
 | 🔒 Collateral System | Borrower locks ETH in the contract — auto-seized on default |
 | 📊 On-Chain Credit Score | Dynamic score (300–900) based on repayment history, modeled after CIBIL |
 | ⏰ Late Penalty Engine | Automatic penalty calculated per day overdue using block timestamps |
-| ⭐ Reputation System | Post-loan ratings restricted to verified participants only |
 | 🌐 Pure Web3 Frontend | No backend server — MetaMask signs every transaction directly |
 
 ---
