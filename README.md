@@ -58,8 +58,8 @@ credichain/
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/yourusername/credichain.git
-cd credichain
+git clone https://github.com/DhruvMarwal/blockchain-loan-approval-system.git
+cd blockchain-loan-approval-system
 ```
 
 ### 2. Install dependencies
