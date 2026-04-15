@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// @author: Your Name
-// @notice: Optimized P2P Lending Protocol
-// @dev: Marketplace + Collateral + Credit Score + Late Penalty
-
 contract P2PLending {
 
     // ════════════════════════════════════════
