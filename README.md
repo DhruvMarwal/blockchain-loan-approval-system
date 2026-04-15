@@ -90,11 +90,20 @@ npx serve .
 ```
 Open `http://localhost:3000/frontend/index_web3.html` in your browser.
 
-### 7. Connect MetaMask
-- Add network: `http://127.0.0.1:8545` | Chain ID: `31337`
-- Import a test account using private key from step 3
-- Click "Connect MetaMask" in the app
+## 🦊 MetaMask Setup
 
+1. Install MetaMask extension  
+2. Create or import a wallet  
+
+### Add Local Network
+- Network Name: Hardhat Localhost  
+- RPC URL: http://127.0.0.1:8545  
+- Chain ID: 31337  
+- Currency Symbol: ETH  
+
+### Import Test Account
+- Copy private key from Hardhat terminal  
+- Import into MetaMask  
 ---
 
 ## 🔄 How It Works
